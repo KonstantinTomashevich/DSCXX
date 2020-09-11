@@ -1,1 +1,1 @@
-add_library(UniqueWords Trie.hpp Trie.cpp)
+add_library(UniqueWords STATIC Trie.hpp Trie.cpp CountUniqueWords.hpp CountUniqueWords.cpp)
