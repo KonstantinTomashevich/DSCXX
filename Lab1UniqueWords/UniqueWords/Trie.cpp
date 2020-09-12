@@ -24,19 +24,24 @@ bool Trie::Contains (const std::string &string) const
 
         char NextSymbol ()
         {
-            char next = *searchIterator;
-            ++searchIterator;
-
             if (searchIterator == endIterator)
             {
-                done = true;
+                return '\0';
             }
-
-            return next;
+            else
+            {
+                char next = *searchIterator;
+                ++searchIterator;
+                return next;
+            }
         }
 
         void ProcessNode (const Node *node)
         {
+            if (node->symbol_ == '\0' && searchIterator == endIterator)
+            {
+                done = true;
+            }
         }
 
         bool IsSatisfied ()
@@ -77,28 +82,43 @@ bool Trie::Insert (const std::string &string)
 
         char NextSymbol ()
         {
-            char next = *searchIterator;
-            ++searchIterator;
-
-            if (searchIterator == endIterator)
+            char next = CurrentSymbol ();
+            if (next != '\0')
             {
-                done = true;
+                ++searchIterator;
             }
 
             return next;
+        }
+
+        char CurrentSymbol ()
+        {
+            if (searchIterator == endIterator)
+            {
+                return '\0';
+            }
+            else
+            {
+                return *searchIterator;
+            }
         }
 
         void ProcessNode (Node *node)
         {
             try
             {
-                node->children_.at (*searchIterator);
+                node->children_.at (CurrentSymbol ());
             }
             catch (std::out_of_range &exception)
             {
                 node->children_.insert (std::make_pair (
-                    *searchIterator, new Node (*searchIterator)));
+                    *searchIterator, new Node (CurrentSymbol ())));
                 changesDone = true;
+            }
+
+            if (node->symbol_ == '\0' && searchIterator == endIterator)
+            {
+                done = true;
             }
         }
 

@@ -31,6 +31,13 @@ BOOST_AUTO_TEST_CASE (FreshContainsNothing)
     BOOST_REQUIRE (!Trie ().Contains ("Hello, world!"));
 }
 
+BOOST_AUTO_TEST_CASE (DontContainsPrefix)
+{
+    Trie trie;
+    BOOST_REQUIRE (trie.Insert ("ABCD"));
+    BOOST_REQUIRE (!trie.Contains ("ABC"));
+}
+
 BOOST_AUTO_TEST_CASE (ContainsAfterInsert)
 {
     Trie trie;
