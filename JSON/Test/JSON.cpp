@@ -30,9 +30,8 @@ BOOST_AUTO_TEST_CASE (ValueMove)
 static void VerifyTestAttribute (const std::string &name, const std::string &value, const JSON::Attribute &attribute)
 {
     BOOST_REQUIRE (attribute.name_ == name);
-    BOOST_REQUIRE (attribute.value_ != nullptr);
-    BOOST_REQUIRE (std::holds_alternative <JSON::Value> (*attribute.value_));
-    BOOST_REQUIRE (std::get <JSON::Value> (*attribute.value_).value_ == value);
+    BOOST_REQUIRE (std::holds_alternative <JSON::Value> (attribute.value_));
+    BOOST_REQUIRE (std::get <JSON::Value> (attribute.value_).value_ == value);
 }
 
 BOOST_AUTO_TEST_CASE (AttributeFromInitializerList)
@@ -40,18 +39,17 @@ BOOST_AUTO_TEST_CASE (AttributeFromInitializerList)
     std::string name = "test_name";
     std::string stringValue = "test_value";
 
-    JSON::Attribute attribute (name, JSON::ConstructAny <JSON::Value> (stringValue));
+    JSON::Attribute attribute (name, JSON::Value {stringValue});
     VerifyTestAttribute (name, stringValue, attribute);
 }
 
 BOOST_AUTO_TEST_CASE (AttributeCopy)
 {
-    JSON::Attribute firstAttribute ("test_name", JSON::ConstructAny <JSON::Value> ("test_value"));
+    JSON::Attribute firstAttribute ("test_name", JSON::Value {"test_value"});
     JSON::Attribute secondAttribute = firstAttribute;
 
     BOOST_REQUIRE (firstAttribute.name_ == secondAttribute.name_);
-    BOOST_REQUIRE (*firstAttribute.value_ == *secondAttribute.value_);
-    BOOST_REQUIRE (firstAttribute.value_ != secondAttribute.value_);
+    BOOST_REQUIRE (firstAttribute.value_ == secondAttribute.value_);
     BOOST_REQUIRE (firstAttribute == secondAttribute);
 }
 
@@ -60,11 +58,11 @@ BOOST_AUTO_TEST_CASE (AttributeMove)
     std::string name = "test_name";
     std::string stringValue = "test_value";
 
-    JSON::Attribute firstAttribute (name, JSON::ConstructAny <JSON::Value> (stringValue));
+    JSON::Attribute firstAttribute (name, JSON::Value {stringValue});
     JSON::Attribute secondAttribute (std::move (firstAttribute));
 
     BOOST_REQUIRE (firstAttribute.name_.empty ());
-    BOOST_REQUIRE (firstAttribute.value_ == nullptr);
+    BOOST_REQUIRE (std::get <JSON::Value> (firstAttribute.value_).value_.empty ());
     VerifyTestAttribute (name, stringValue, secondAttribute);
 }
 
@@ -78,17 +76,17 @@ static void VerifyTestArray (const std::array <std::string, 3> &strings, const J
 {
     for (std::size_t index = 0; index < strings.size (); ++index)
     {
-        BOOST_REQUIRE (std::holds_alternative <JSON::Value> (*array.values_[index]));
-        BOOST_REQUIRE (std::get <JSON::Value> (*array.values_[index]).value_ == strings[index]);
+        BOOST_REQUIRE (std::holds_alternative <JSON::Value> (array.values_[index]));
+        BOOST_REQUIRE (std::get <JSON::Value> (array.values_[index]).value_ == strings[index]);
     }
 }
 
 #define INITIALIZE_TEST_ARRAY(strings) \
-{ \
-    new JSON::Any (JSON::Value {strings[0]}), \
-    new JSON::Any (JSON::Value {strings[1]}),\
-    new JSON::Any (JSON::Value {strings[2]})\
-}
+{{ \
+    JSON::Value {strings[0]}, \
+    JSON::Value {strings[1]},\
+    JSON::Value {strings[2]}\
+}}
 
 BOOST_AUTO_TEST_CASE (ArrayFromInitializerList)
 {
@@ -102,13 +100,12 @@ BOOST_AUTO_TEST_CASE (ArrayFromInitializerList)
 BOOST_AUTO_TEST_CASE (ArrayCopy)
 {
     std::array <std::string, 3> strings {"first", "second", "third"};
-    JSON::Array firstArray (INITIALIZE_TEST_ARRAY (strings));
+    JSON::Array firstArray INITIALIZE_TEST_ARRAY (strings);
 
     JSON::Array secondArray = firstArray;
     for (std::size_t index = 0; index < strings.size (); ++index)
     {
-        BOOST_REQUIRE (*firstArray.values_[index] == *secondArray.values_[index]);
-        BOOST_REQUIRE (firstArray.values_[index] != secondArray.values_[index]);
+        BOOST_REQUIRE (firstArray.values_[index] == secondArray.values_[index]);
     }
 
     BOOST_REQUIRE (firstArray == secondArray);
@@ -117,7 +114,7 @@ BOOST_AUTO_TEST_CASE (ArrayCopy)
 BOOST_AUTO_TEST_CASE (ArrayMove)
 {
     std::array <std::string, 3> strings {"first", "second", "third"};
-    JSON::Array firstArray (INITIALIZE_TEST_ARRAY (strings));
+    JSON::Array firstArray INITIALIZE_TEST_ARRAY (strings);
 
     JSON::Array secondArray (std::move (firstArray));
     BOOST_REQUIRE (firstArray.values_.empty ());
@@ -139,18 +136,16 @@ static void VerifyTestObject (const std::string &firstAttributeName, const std::
     VerifyTestAttribute (firstAttributeName, firstAttributeValue, object.attributes_[0]);
 
     BOOST_REQUIRE (object.attributes_[1].name_ == secondAttributeName);
-    BOOST_REQUIRE (object.attributes_[1].value_ != nullptr);
-    BOOST_REQUIRE (std::holds_alternative <JSON::Array> (*object.attributes_[1].value_));
-    VerifyTestArray (secondAttributeValue, std::get <JSON::Array> (*object.attributes_[1].value_));
+    BOOST_REQUIRE (std::holds_alternative <JSON::Array> (object.attributes_[1].value_));
+    VerifyTestArray (secondAttributeValue, std::get <JSON::Array> (object.attributes_[1].value_));
 }
 
 #define INITIALIZE_TEST_OBJECT(firstAttributeName, firstAttributeValue, secondAttributeName, secondAttributeValue) \
 { \
-    {firstAttributeName, JSON::ConstructAny <JSON::Value> (firstAttributeValue)}, \
+    {firstAttributeName, JSON::Value {firstAttributeValue}}, \
     { \
         secondAttributeName, \
-        JSON::ConstructAny <JSON::Array> ( \
-            JSON::Array INITIALIZE_TEST_ARRAY (secondAttributeValue)) \
+        JSON::Array INITIALIZE_TEST_ARRAY (secondAttributeValue) \
     } \
 }
 

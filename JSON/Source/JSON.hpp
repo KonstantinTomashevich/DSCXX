@@ -12,18 +12,6 @@ struct Object;
 
 using Any = std::variant <Value, Array, Object>;
 
-template <typename T, typename... Args> std::unique_ptr <Any> ConstructAny (Args... args)
-{
-    return std::make_unique <Any> (T {std::forward <Args> (args)...});
-}
-
-enum class Types
-{
-    VALUE = 0,
-    ARRAY,
-    OBJECT
-};
-
 struct Value
 {
     bool operator== (const Value &rhs) const;
@@ -32,38 +20,27 @@ struct Value
     std::string value_;
 };
 
-struct Attribute
-{
-    Attribute (std::string name, std::unique_ptr <Any> &&value);
-    Attribute (const Attribute &other);
-    Attribute (Attribute &&other);
-
-    bool operator== (const Attribute &rhs) const;
-    bool operator!= (const Attribute &rhs) const;
-
-    std::string name_;
-    std::unique_ptr <Any> value_;
-};
-
 struct Array
 {
     Array ();
-    Array (std::initializer_list <Any *> values);
+    Array (std::vector <Any> values);
     Array (const Array &other);
     Array (Array &&other);
 
     bool operator== (const Array &rhs) const;
     bool operator!= (const Array &rhs) const;
 
-    std::vector <std::unique_ptr <Any>> values_;
+    std::vector <Any> values_;
 };
+
+struct Attribute;
 
 struct Object
 {
-    Object();
-    Object(std::initializer_list<Attribute> attributes);
-    Object(const Object &object);
-    Object(Object &&object);
+    Object ();
+    Object (std::initializer_list <Attribute> attributes);
+    Object (const Object &object);
+    Object (Object &&object);
 
     bool operator== (const Object &rhs) const;
     bool operator!= (const Object &rhs) const;
@@ -72,5 +49,18 @@ struct Object
     const Attribute &GetByName (const std::string &name) const;
 
     std::vector <Attribute> attributes_;
+};
+
+struct Attribute
+{
+    Attribute (std::string name, Any value);
+    Attribute (const Attribute &other);
+    Attribute (Attribute &&other);
+
+    bool operator== (const Attribute &rhs) const;
+    bool operator!= (const Attribute &rhs) const;
+
+    std::string name_;
+    Any value_;
 };
 }

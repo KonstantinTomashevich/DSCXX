@@ -44,69 +44,20 @@ bool Value::operator!= (const Value &rhs) const
     return !(rhs == *this);
 }
 
-Attribute::Attribute (std::string name, std::unique_ptr <Any> &&value)
-    : name_ (std::move (name)),
-      value_ (std::move (value))
-{
-}
-
-Attribute::Attribute (const Attribute &other)
-    : name_ (other.name_),
-      value_ (CopyAnyPointer (other.value_))
-{
-}
-
-Attribute::Attribute (Attribute &&other)
-    : name_ (std::move (other.name_)),
-      value_ (std::move (other.value_))
-{
-}
-
-bool Attribute::operator== (const Attribute &rhs) const
-{
-    if (name_ != rhs.name_ || (value_ == nullptr && rhs.value_ != nullptr) ||
-        (value_ != nullptr && rhs.value_ == nullptr))
-    {
-        return false;
-    }
-    else if (value_ == nullptr && rhs.value_ == nullptr)
-    {
-        return true;
-    }
-    else
-    {
-        return *value_ == *rhs.value_;
-    }
-}
-
-bool Attribute::operator!= (const Attribute &rhs) const
-{
-    return !(rhs == *this);
-}
-
 Array::Array ()
     : values_ ()
 {
 }
 
-Array::Array (std::initializer_list <Any *> values)
-    : values_ ()
+Array::Array (std::vector <Any> values)
+    : values_ (std::move (values))
 {
-    values_.reserve (values.size ());
-    for (const auto &value : values)
-    {
-        values_.emplace_back (value);
-    }
 }
 
 Array::Array (const Array &other)
-    : values_ ()
+    : values_ (other.values_)
 {
-    values_.reserve (other.values_.size ());
-    for (const auto &otherValue : other.values_)
-    {
-        values_.emplace_back (CopyAnyPointer (otherValue));
-    }
+
 }
 
 Array::Array (Array &&other)
@@ -126,7 +77,7 @@ bool Array::operator== (const Array &rhs) const
 
     while (firstIterator != values_.end ())
     {
-        if (**firstIterator != **secondIterator)
+        if (*firstIterator != *secondIterator)
         {
             return false;
         }
@@ -233,5 +184,33 @@ const Attribute &Object::GetByName (const std::string &name) const
     {
         return *iterator;
     }
+}
+
+Attribute::Attribute (std::string name, Any value)
+    : name_ (std::move (name)),
+      value_ (std::move (value))
+{
+}
+
+Attribute::Attribute (const Attribute &other)
+    : name_ (other.name_),
+      value_ (other.value_)
+{
+}
+
+Attribute::Attribute (Attribute &&other)
+    : name_ (std::move (other.name_)),
+      value_ (std::move (other.value_))
+{
+}
+
+bool Attribute::operator== (const Attribute &rhs) const
+{
+    return name_ == rhs.name_ && value_ == rhs.value_;
+}
+
+bool Attribute::operator!= (const Attribute &rhs) const
+{
+    return !(rhs == *this);
 }
 }
